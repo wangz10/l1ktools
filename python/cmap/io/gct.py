@@ -490,7 +490,7 @@ class GCT(object):
         return a list of all meta data entries in the column specified by column_name
         '''
         c = self._meta.cursor()
-        query = "SELECT %s FROM col" % (column_name,)
+        query = 'SELECT "%s" FROM col' % (column_name,)
         c.execute(query)
         meta_list = []
         for row in c:
@@ -503,7 +503,7 @@ class GCT(object):
         return a list of all meta data entries in the column specified by row_name
         '''
         c = self._meta.cursor()
-        query = "SELECT %s FROM row" % (row_name,)
+        query = 'SELECT "%s" FROM row' % (row_name,)
         c.execute(query)
         meta_list = []
         for row in c:
