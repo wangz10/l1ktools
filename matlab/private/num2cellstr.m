@@ -8,9 +8,9 @@ function c = num2cellstr(x,varargin)
 
 [nr, nc] = size(x);
 pnames = {'fmt', 'precision'};
-dflts = {'%g', nan};
+dflts = {'%g', inf};
 arg = parse_args(pnames, dflts, varargin{:});
-if ~isnan(arg.precision)
+if ~isinf(arg.precision)
     arg.fmt = sprintf('%%.%df', arg.precision);
 end
 
