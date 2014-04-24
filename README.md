@@ -1,0 +1,128 @@
+# L1000 Analysis Tools v1.0
+
+
+Copyright 2011-2014 Broad Institute of MIT and Harvard.
+
+A collection of software tools to read and analyze data produced from
+the L1000 project (www.lincscloud.org).
+
+## Analysis Tools
+
+A brief description of the tools included in this software package is
+given below. The Matlab implementation of the tools is currently the
+most mature. Some basic utilities in R and java are also included. We
+will update the tools as they become available.
+
+### Matlab Tools: matlab/
+
+#### Requirements:
+
+1. Matlab R2009a and above
+2. Statistics Toolbox
+
+#### Setting the MATLAB path:
+Enter the "pathtool" command, click "Add with Subfolders...", and select the directory l1ktools/matlab.
+
+
+#### Tools:
+* **l1kt_dpeak.m**: Performs peak deconvolution for all analytes in a single LXB file, and outputs a report of the detected peaks.
+* **l1kt_plot_peaks.m**: Plots intensity distributions for one or more analytes in an LXB file.
+* **l1kt_parse_lxb.m**:	Reads an LXB file and returns the RID and RP1 values.
+* **l1kt_liss.m**: Performs Luminex Invariant Set Smoothing on a raw (GEX) input .gct file
+* **l1kt_qnorm.m**:	Performs quantile normalization on an input .gct file
+* **l1kt_infer.m**:	Infers expression of target genes from expression of landmark genes in an input .gct file
+
+See the documentation included with each script for a details on usage
+and input parameters.
+
+#### Demo:
+* **dpeak_demo.m**: Demo of peak detection. To run the demo, start Matlab, change to the folder containing dpeak_demo and
+type dpeak_demo in the Command Window. This will read a sample LXB
+file (A10.lxb), generate a number of intensity distribution plots and create a
+text report of the statistics of the detected peaks (A10_pkstats.txt).
+
+* **example_methods.m**: Reads in a .gct and a .gctx file, z-score the data in the .gctx file, and read in an .lxb file. To run the demo, start Matlab, change to the folder containing example_methods and type example_methods at the command line.
+
+
+### R Tools: R/
+
+#### Requirements:
+
+1. R versions 2.9 and above
+2. prada package: http://www.bioconductor.org/packages/devel/bioc/html/prada.html
+3. h5r package: http://cran.r-project.org/web/packages/h5r/index.html
+
+#### Tools:
+
+* **cmap/lxb2txt.R**:	Saves values from an LXB file as a tab-delimited text file.
+* **cmap/lxb2txt.sh**: Bash wrapper to lxb2txt.R 
+* **cmap/io.R**: Classes for reading and writing .gct / .gctx files
+
+#### Demo:
+* **example_methods.R**: To run the demo, change to the folder containing example_methods.R and source the script. It will read in a .gctx file and display its contents.
+
+
+### Java Tools: java/
+
+#### Tools:
+
+* **lxb-util.jar**:	Java routine for parsing LXB files (source included).
+
+### Python Tools: python/
+
+#### Requirements:
+
+1. Python 2.7 (untested under Python 3)
+2. numpy (http://numpy.scipy.org)
+3. pandas (http://pandas.pydata.org/)
+4. requests (http://docs.python-requests.org/en/latest/)
+5. pytables (http://www.pytables.org/moin)
+6. blessings (http://pypi.python.org/pypi/blessings)
+
+#### Setting the Python path:
+Append l1ktools/python to the PYTHONPATH environment variable.
+
+#### Tools:
+* **cmap/io/gct.py** : Classes to interact with .gct and .gctx files.
+* **cmap/util/api_utils.py**: Classes to make calls to the LINCS annotation API and return results as Python data structures.
+
+#### Demo:
+* **example_methods.py**: To run the demo, change to the folder containing example_methods.py and run the script. It will read in a .gctx file, display its contents, and write to disc.
+
+## Common data analysis tasks
+Below are summarized the tools available to perform so common data analysis tasks.
+
+### Reading .gct and .gctx files
+* **MATLAB**: Use the parse_gctx function.
+* **R**: Source the script l1ktools/R/cmap/io.R. Then use the parse.gctx function.
+* **Python**: Import the module cmap.io.gct. Then instantiate a GCT object, and call its read() method. For more information, see the documentation on the GCT class.
+
+### Creating .gct and .gctx files
+* **MATLAB**: Use the mkgct and mkgctx functions.
+* **Python**: Import cmap.io.gct and instantiate a GCT object. Then call the "build" method or "build_from_DataFrame" method to assmble a GCT object from a data matrix and optionally row and column annotations. Finally, call the "write" method to write to file as a .gctx.
+
+### Z-Scoring a data set
+* **MATLAB**: Use the robust_zscore function. Also see the example_methods.m script.
+
+### Reading / converting .lxb files
+* **MATLAB**: To read an .lxb into the MATLAB workspace, use the parse_lxb function.
+* **R**: To convert an .lxb file to text, use the R/cmap/lxb2txt.sh script.
+
+
+## The LINCS API
+
+The CMAP Cloud API offers programmatic access to annotations and perturbational signatures in [the LINCS L1000 dataset](http://lincscloud.org/) via a collection of HTTP-based RESTful web services. These services support complex queries via simple HTTP GET requests that can be executed in a web browser or any programming language. The results are returned as standard JSON objects. Click on the links on the left for usage instructions and examples.
+
+### Interacting with the API
+
+In order to make the API call, an API key must be provided. If you do not have a key, contact lincs@broadinstitute.org.
+
+* **Lincscloud website**: To view the available services and live examples, visit [http://api.lincscloud.org/](http://api.lincscloud.org/).
+* **Programmatic access via Python**: Import the module cmap.util.api_utils. The classes CMapAPI and APIContainer handle calls to the API; see their documentation for more details. See example_methods.py for an example API call.
+
+#### Python demo:
+* **api_example.py**: To run the demo, change to the folder containing api_examples.py and run the script. It will make calls to the API and store their results as Python data structures.
+
+## Software License
+For licensing information see [http://lincscloud.org/license/](http://lincscloud.org/license/).
+
