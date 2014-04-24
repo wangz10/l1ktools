@@ -38,7 +38,8 @@ type dpeak_demo in the Command Window. This will read a sample LXB
 file (A10.lxb), generate a number of intensity distribution plots and create a
 text report of the statistics of the detected peaks (A10_pkstats.txt).
 
-* **example_methods.m**: To run the demo, start Matlab, change to the folder containing example_methods and type example_methods at the command line. The script will read in a .gct and a .gctx file, z-score the data in the .gctx file, and read in an .lxb file.
+* **example_methods.m**: To run the demo, start Matlab, change to the folder containing example_methods and type example_methods at the command line. The script will read in a .gct and a .gctx file, z-score the data in the .gctx file, and read in an .lxb file. 
+
 
 ### R Tools: R/
 
@@ -50,8 +51,9 @@ text report of the statistics of the detected peaks (A10_pkstats.txt).
 
 #### Tools:
 
-* **cmap/lxb2txt.R**	Saves values from an LXB file as a tab-delimited text file.
-* **cmap/lxb2txt.sh** Bash wrapper to lxb2txt.R 
+* **cmap/lxb2txt.R**:	Saves values from an LXB file as a tab-delimited text file.
+* **cmap/lxb2txt.sh**: Bash wrapper to lxb2txt.R 
+* **cmap/io.R**: Classes for reading and writing .gct / .gctx files
 
 #### Demo:
 * **example_methods.R**: To run the demo, change to the folder containing example_methods.R and source the script. It will read in a .gctx file and display its contents.
