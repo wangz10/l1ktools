@@ -126,5 +126,7 @@ In order to make the API call, an API key must be provided. If you do not have a
 * [**api_examples.py**](https://github.com/cmap/l1ktools/blob/master/python/api_examples.py): To run the demo, change to the folder containing api_examples.py and run the script. It will make calls to the API and store their results as Python data structures.
 
 ## Software License
-For licensing information see [http://lincscloud.org/license/](http://lincscloud.org/license/).
 
+This software is restricted to research use only within academic, not-for-profit institutions.
+
+For licensing information see [http://lincscloud.org/license/](http://lincscloud.org/license/).
