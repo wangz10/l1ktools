@@ -2,9 +2,6 @@
 % in MATLAB, and performing z-scoring for a data data set.
 % For this script to run properly, run the script from its directory.
 
-% add required path
-addpath('lib')
-
 % read a .gct file
 ds = parse_gct('../data/log_ybio_epsilon.gct');
 
