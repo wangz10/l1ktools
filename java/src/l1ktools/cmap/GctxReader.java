@@ -1,6 +1,7 @@
 package l1ktools.cmap;
 
 import java.io.File;
+import java.util.AbstractList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -98,19 +99,99 @@ public class GctxReader {
 		list = Arrays.asList(array);
 	    } else if (obj instanceof float[]) {
 		float[] array = (float[]) obj;
-		list = Arrays.asList(array);
+		list = new FloatList(array);
 	    } else if (obj instanceof double[]) {
 		double[] array = (double[]) obj;
-		list = Arrays.asList(array);
+		list = new DoubleList(array);
 	    } else if (obj instanceof int[]) {
 		int[] array = (int[]) obj;
-		list = Arrays.asList(array);
+		list = new IntList(array);
+	    } else {
+		System.out.println("Unknown data type");
 	    }
 	    if (list != null) {
 		map.put(name, list);
 	    }
 	}
 	return map;
+    }
+
+    private static class DoubleList extends AbstractList<Double> {
+	private double[] array;
+
+	public DoubleList(double[] array) {
+	    this.array = array;
+	}
+
+	@Override
+	public Double get(int index) {
+	    return array[index];
+	}
+
+	@Override
+	public Double set(int index, Double value) {
+	    Double old = array[index];
+	    array[index] = value;
+	    return old;
+	}
+
+	@Override
+	public int size() {
+	    return array.length;
+	}
+
+    }
+
+    private static class FloatList extends AbstractList<Float> {
+	private float[] array;
+
+	public FloatList(float[] array) {
+	    this.array = array;
+	}
+
+	@Override
+	public Float get(int index) {
+	    return array[index];
+	}
+
+	@Override
+	public Float set(int index, Float value) {
+	    Float old = array[index];
+	    array[index] = value;
+	    return old;
+	}
+
+	@Override
+	public int size() {
+	    return array.length;
+	}
+
+    }
+
+    private static class IntList extends AbstractList<Integer> {
+	private int[] array;
+
+	public IntList(int[] array) {
+	    this.array = array;
+	}
+
+	@Override
+	public Integer get(int index) {
+	    return array[index];
+	}
+
+	@Override
+	public Integer set(int index, Integer value) {
+	    Integer old = array[index];
+	    array[index] = value;
+	    return old;
+	}
+
+	@Override
+	public int size() {
+	    return array.length;
+	}
+
     }
 
 }
