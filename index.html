@@ -83,7 +83,9 @@ R tools are found under R/cmap
 
 #### Tools:
 
-* [**lxb-util.jar**](https://github.com/cmap/l1ktools/blob/master/matlab/lib/lxb-util.jar): Java routine for parsing LXB files (source included).
+* [**GctxDataset.java**](https://github.com/cmap/l1ktools/blob/master/java/src/l1ktools/cmap/GctxDataset.java): Class to store a GCTX data set.
+* [**GctxReader.java**](https://github.com/cmap/l1ktools/blob/master/java/src/l1ktools/cmap/GctxReader.java): Class to read a GCTX file.
+* [**LXBUtil.java**](https://github.com/cmap/l1ktools/blob/master/java/src/l1ktools/cmap/LXBUtil.java): Class to read and store .lxb files.
 
 ### Python Tools: python/
 
@@ -113,6 +115,7 @@ Below are summarized the tools available to perform so common data analysis task
 * **MATLAB**: Use the [parse_gctx](https://github.com/cmap/l1ktools/blob/master/matlab/parse_gctx.m) function.
 * **R**: Source the script [l1ktools/R/cmap/io.R](https://github.com/cmap/l1ktools/blob/master/R/cmap/io.R). Then use the parse.gctx function.
 * **Python**: Import the module [cmap.io.gct](https://github.com/cmap/l1ktools/blob/master/python/cmap/io/gct.py). Then instantiate a GCT object, and call its read() method. For more information, see the documentation on the GCT class.
+* **Java**: See [ReadGctxExample.java](https://github.com/cmap/l1ktools/blob/master/java/examples/ReadGctxExample.java) for an example.
 
 ### Creating .gct and .gctx files
 * **MATLAB**: Use the [mkgct](https://github.com/cmap/l1ktools/blob/master/matlab/lib/mkgct.m) and [mkgctx](https://github.com/cmap/l1ktools/blob/master/matlab/lib/mkgctx.m) functions.
