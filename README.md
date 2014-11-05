@@ -72,6 +72,10 @@ R tools are found under R/cmap
 * [**GctxReader.java**](https://github.com/cmap/l1ktools/blob/master/java/src/l1ktools/cmap/GctxReader.java): Class to read a GCTX file.
 * [**LXBUtil.java**](https://github.com/cmap/l1ktools/blob/master/java/src/l1ktools/cmap/LXBUtil.java): Class to read and store .lxb files.
 
+#### Demo:
+* [**ReadGctxExample.java**](https://github.com/cmap/l1ktools/blob/master/java/examples/ReadGctxExample.java): To run the demo, change to the java/examples folder, then compile by running sh compileExamples.sh, then run by running the runExample*.sh file that alligns with your OS. 
+* 
+
 ### Python Tools: python/
 
 #### Requirements:
