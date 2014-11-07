@@ -439,7 +439,7 @@ def get_user_key(key = None, keyfile = None):
 			res = f.read()
 	# if it's not there, ask user for input
 	else:
-		res = raw_input('Please enter LINCS API key\n')
+		res = raw_input('Please enter API key\n')
 	return res
 
 class CMapAPIException(Exception):
@@ -447,4 +447,3 @@ class CMapAPIException(Exception):
 	Base class for all excpetions related to CMAP API
 	'''
 	pass
-                            
