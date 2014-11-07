@@ -5,7 +5,7 @@ This script contains examples for reading .gctx files in Python.
 import cmap.io.gct as gct
 
 # give input file
-path_to_gctx_file = '../data/modzs_n272x978.gctx'
+path_to_gctx_file = '/xchip/cogs/l1ktools/data/modzs_n272x978.gctx'
 
 # read the full data file
 GCTObject = gct.GCT(path_to_gctx_file)
@@ -27,4 +27,4 @@ inames = GCTObject.get_column_meta('pert_iname')
 # get the gene symbol meta data field from the row data
 symbols = GCTObject.get_row_meta('pr_gene_symbol')
 
-GCTObject.write('../data/python_example.gctx')
+GCTObject.write('/xchip/cogs/l1ktools/data/python_example.gctx')
