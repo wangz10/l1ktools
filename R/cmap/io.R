@@ -395,65 +395,13 @@ path.join = function(...) {
     return(path)
 }
 
-# function to combine maps
-combineMaps <- function(map1, map2) {
-  # assumes maps are data frames
-  setdiff1 <- setdiff(names(map1), names(map2))
-  setdiff2 <- setdiff(names(map2), names(map1))
-  diffCols <- c(setdiff1, setdiff2)
-  if (length(diffCols) > 0) {
-    warning("maps had differing column names, these columns excluded:")
-    warn_msg <- ""
-    for (col in diffCols) {
-      warn_msg <- paste(warn_msg, col, sep="\n")
-    }
-    warning(warn_msg)
-    sameCols <- intersect(names(map1), names(map2))
-    return(rbind(map1[, sameCols], map2[, sameCols]))
-  }
-  else {
-    return(rbind(map1, map2))
-  }
-}
-
-# function to 'simplify' a map into a src file
-map2src <- function(map) {
-  # assumes map is a data frame
-  
-  # rename columns
-  names(map) <- gsub("rna", "pert", names(map))
-  
-  # remove columns that will be implied by plate name
-  cols_to_remove <- c("cell_id", "pert_time", "pert_time_unit")
-  map <- map[, !(names(map) %in% cols_to_remove)]
-  
-  # strip out first token of pert_plate and replace column with that
-  map$pert_plate <- unlist(lapply(as.character(map$pert_plate), function(x) unlist(strsplit(x, "_"))[1]))
-  
-  return(map)
-}
-
-# take a directory of maps and combine them into a single src
-maps2src <- function(map_dir, patt) {
-  mfiles <- dir(map_dir, pattern=paste("\\.", patt, "$", sep=""), full.names=T)
-  src <- read.csv(file=mfiles[1], header=T, sep="\t")
-  src <- map2src(src)
-  for (mf in mfiles[2:length(mfiles)]) {
-    map <- read.csv(file=mf, header=T, sep="\t")
-    s <- map2src(map)
-    src <- combineMaps(src, s)
-  }
-  return(src)
-}
-
-splitMap <- function(map, field) {
-  # takes a map, assumed to be data frame, and splits it based
-  # on the unique values of field, returing a list of sub-maps
-  facts <- levels(as.factor(map[, field]))
-  sub_maps <- list()
-  for(f in facts) {
-    tmp <- map[map[, field]==f, ]
-    sub_maps[[length(sub_maps) + 1]] <- tmp
-  }
-  return(sub_maps)
+# function to make a RESTful call to the supplied URL
+# and return the parsed JSON response
+call.api <- function(url) {
+  require(RCurl)
+  require(rjson)
+  # call API, parse JSON, and return parsed object
+  # .opts = list(ssl.verifypeer = FALSE)
+  # disables the SSL certificate check
+  return(fromJSON(getURL(url, .opts = list(ssl.verifypeer = FALSE))))
 }
