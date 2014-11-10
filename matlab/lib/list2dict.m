@@ -18,6 +18,6 @@ else
     if ~isdefined('v')
         v = 1:length(k);
     end
-    d = containers.Map(k, v);
+    d = containers.Map(k, num2cell(v));
 end
 end
