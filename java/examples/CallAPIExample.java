@@ -1,7 +1,7 @@
-import l1ktools.cmap.GctxDataset;
-import l1ktools.cmap.GctxReader;
-import java.io.*;
-import java.net.*;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.net.URLConnection;
 
 public class CallAPIExample {
     /**

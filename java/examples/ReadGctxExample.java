@@ -1,18 +1,29 @@
-import l1ktools.cmap.GctxDataset;
-import l1ktools.cmap.GctxReader;
+import java.util.ArrayList;
+import java.util.Collection;
+
+import cmap.io.GctxReader;
+import cmap.matrix.Dataset;
+import cmap.matrix.Vector;
 
 public class ReadGctxExample {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 	GctxReader reader = new GctxReader("../data/modzs_n272x978.gctx");
 	try {
-	    GctxDataset dataset = reader.read();
+	    // read the full dataset
+	    Dataset dataset = reader.read();
 	    System.out.println(dataset.getRowCount() + " rows, " + dataset.getColumnCount() + " columns");
-	    for (String key : dataset.getColumnMetadata().keySet()) {
-		System.out.println(key + "=" + dataset.getColumnMetadata().get(key));
+	    Vector columnIds = dataset.getColumnMetadata().get("id");
+
+	    // read the 1st 10 column ids
+	    Collection<String> columnIdsToExtract = new ArrayList<String>();
+
+	    for (int j = 0; j < 10; j++) {
+		columnIdsToExtract.add((String) columnIds.getValue(j));
 	    }
-	} catch (Exception e) {
-	    e.printStackTrace();
+	    dataset = reader.read(null, columnIdsToExtract);
+	    System.out.println(dataset.getRowCount() + " rows, " + dataset.getColumnCount() + " columns");
+
 	} finally {
 	    reader.close();
 	}

@@ -1,4 +1,4 @@
-package l1ktools.cmap;
+package cmap.io;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
