@@ -5,14 +5,16 @@
 # source the io script
 source("cmap/io.R")
 
-# read the gctx file
-ds = parse.gctx("../data/modzs_n272x978.gctx")
 
-# inspect the matrix
-print(ds@mat[1:10,1:10])
+# initialize a GCT object with a single signature
+ds <- parse.gctx("/xchip/cogs/data/build/a2y13q1/modzs.gctx", cid="CPC005_A375_6H:BRD-A85280935-003-01-7:10")
 
-# inspect the row annotations
-print(ds@rdesc[1:10,])
 
-# inspect the column annotations
-print(ds@cdesc[1:10,])
+# make a call to the CLUE API
+require(RCurl)
+require(rjson)
+
+url <- 'https://api.clue.io/a2/siginfo?q={"pert_desc":"sirolimus","cell_id":"MCF7"}&user_key=lincsdemo&c=1'
+response <- fromJSON(getURL(url, .opts = list(ssl.verifypeer = FALSE)))
+
+# The '.opts = list(ssl.verifypeer = FALSE)' part disables the SSL certificate check.
