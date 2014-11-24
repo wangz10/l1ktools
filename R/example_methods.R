@@ -14,6 +14,7 @@ ds <- parse.gctx("/xchip/cogs/data/build/a2y13q1/modzs.gctx", cid="CPC005_A375_6
 require(RCurl)
 require(rjson)
 
+# count the number of sirolimus signatures in the MCF7 cell line
 url <- 'https://api.clue.io/a2/siginfo?q={"pert_desc":"sirolimus","cell_id":"MCF7"}&user_key=lincsdemo&c=1'
 response <- fromJSON(getURL(url, .opts = list(ssl.verifypeer = FALSE)))
 
