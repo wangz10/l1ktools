@@ -316,6 +316,13 @@ class CMapAPI(object):
 			return res
 		# if not, see if there's just one field
 		else:
+			# if just one field, first check if any of the returned documents are None, 
+			# meaning they didn't contain the one requested field
+			if len(query_args['fields']) == 1:
+				if any([not(x) for x in res]):
+					res = [x for x in res if x]
+					if self.verbose:
+						print 'only {0} documents contained the one requested field'.format(len(res))
 			# Check that all requested fields were found
 			if query_args['fields'] is not None:
 				missings = self._check_fields(res, query_args['fields'])
@@ -325,7 +332,7 @@ class CMapAPI(object):
 					if toDataFrame:
 						res = pd.DataFrame(res)[field]
 					else:
-						res = [x[field] for x in res]
+						res = [x[field] for x in res if x]
 					return res
 			# if more fields, convert to data frame
 			if toDataFrame: res = pd.DataFrame(res)
@@ -335,7 +342,7 @@ class CMapAPI(object):
 		'''
 		Check that all requested fields were returned in the query result.
 		'''
-		allfields = sorted(set([z for y in [x.keys() for x in res] 
+		allfields = sorted(set([z for y in [x.keys() for x in res if x] 
 		                   		for z in y]))
 		missings = sorted(np.setdiff1d(fields, allfields))
 		if missings:
@@ -346,7 +353,7 @@ class CMapAPI(object):
 		# if verbose is set, notify if some fields were not found in all docs
 		if self.verbose:
 			indiv_missing = [np.setdiff1d(allfields, x.keys())
-							 for x in res]
+							 for x in res if x]
 			indiv_missing = sorted(set([z for y in indiv_missing 
 			                       		for z in y]))
 			if indiv_missing:
