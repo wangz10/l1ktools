@@ -1,86 +1,28 @@
-# helper function to subset down to landmark probes only
-mkgct = function(ofile,ds,precision=4,appenddim=T,ver=3) {
-  # gct must contain the following fields
-  #          mat: Numeric data matrix [RxC]
-  #          rid: Cell array of row ids
-  #          rhd: Cell array of row annotation fieldnames
-  #          rdesc: Cell array of row annotations
-  #          cid: Cell array of column ids
-  #          chd: Cell array of column annotation fieldnames
-  #          cdesc: Cell array of column annotations
-  #          version: GCT version string
-  #          src: Source filename
-  
-  
-  # append the dimensions of the data set, if desired
-  nc = ncol(ds@mat)
-  nr = nrow(ds@mat)
-  if (appenddim) {
-    outFile = basename(ofile)
-    filename = strsplit(outFile,'.',fixed=T)[[1]][1]
-    ofile = path.join(dirname(ofile),
-                      sprintf('%s_n%dx%d.gct',filename,
-                              nc,nr)) 
-  }
-  
-  precision = floor(precision)
-  cat(sprintf('Saving file to %s\n',ofile))
-  cat(sprintf('Dimensions of matrix: [%dx%d]\n',nr,nc))
-  cat(sprintf('Setting precision to %d\n',precision))
-  
-  # open file      
-  if (ver==3) {
-    nrdesc = dim(ds@rdesc)[2]
-    ncdesc = dim(ds@cdesc)[2]
-    colkeys = colnames(ds@cdesc)
-    # append header
-    cat(sprintf('#1.%d\n%d\t%d\t%d\t%d', ver, nr, nc, nrdesc, ncdesc),
-        file=ofile,sep='\n')      
-    # line 3: sample row desc keys and sample names
-    cat(paste(c('id',colnames(ds@rdesc),ds@cid),collapse='\t'),
-        file=ofile,sep='\n',append=T)
-    # line 4 + ncdesc: sample desc
-    filler = 'na'
-    for (ii in 1:ncdesc) {
-      if (is.numeric(ds@cdesc[,ii])) {
-        cat(paste(c(colkeys[ii],rep(filler,nrdesc),
-                    round(ds@cdesc[,ii],precision)),
-                  collapse='\t'),
-            file=ofile,sep='\n',append=T)  
-      } else {
-        cat(paste(c(colkeys[ii],rep(filler,nrdesc),
-                    ds@cdesc[,ii]),
-                  collapse='\t'),
-            file=ofile,sep='\n',append=T)
-      }
-    }
-  } else {
-    # append header
-    cat(sprintf('#1.%d\n%d\t%d\t%d\t%d', ver, nr, nc),
-        file=ofile,sep='\n')      
-    # line 3: sample row desc keys and sample names
-    cat(paste(c('id','Description',ds@cid),collapse='\t'),
-        file=ofile,sep='\n',append=T)
-  }
-  
-  for (ii in 1:nr) {    
-    # print rows
-    cat(paste(c(ds@rid[ii],
-                ds@rdesc[ii,],
-                round(ds@mat[ii,],precision)),collapse='\t'),
-        sep='\n',file=ofile,append=T)
-  }
-  cat(sprintf('Saved.\n'))  
-}
+# load dependencies
+library(rhdf5)
 
-subset.to.landmarks <- function(ds) {
- options(stringsAsFactors=FALSE)
- lm <- read.table('/xchip/cogs/data/vdb/spaces/lm_epsilon_n978.grp') 
- return(gctextract.tool(ds,rid=lm$V1))
-}
+
+########################################
+### GCT class and method definitions ###
+########################################
+
+setClass("GCT",
+         representation(
+             mat = "matrix",
+             rid = "vector",
+             cid = "vector",
+             rdesc = "data.frame",
+             cdesc = "data.frame",
+             version = "character",
+             src = "character"
+         )
+)
+
+
+#### define some helper methods for parsing gctx files ###
 
 # helper function to set all the row and column annotations to the correct data type
-fix.datatypes = function(meta) {
+fix.datatypes <- function(meta) {
     # turn all warnings to errors so we can use the try statement to grab strings
     options(warn = 2)
     for (field.name in names(meta)) {
@@ -102,18 +44,57 @@ fix.datatypes = function(meta) {
     return(meta)
 }
 
-# define the gct object class
-setClass("GCT",
-         representation(
-             mat = "matrix",
-             rid = "vector",
-             cid = "vector",
-             rdesc = "data.frame",
-             cdesc = "data.frame",
-             version = "character",
-             src = "character"
-         )
-)
+
+# helper function for parsing row or column metadata
+read.gctx.meta <- function(gctx_path, dimension="row", ids=NULL) {
+  if (!(dimension %in% c("row", "col"))) {
+    stop("dimension can be either row or col")
+  }
+  if (dimension == "row") {
+    name <- "0/META/ROW"
+  } else {
+    name <- "0/META/COL"
+  }
+  raw_annots <- h5read(gctx_path, name=name) # returns a list
+  fields <- names(raw_annots)
+  # define an empty data frame of the correct dimensions
+  annots <-  data.frame(matrix(nrow=length(raw_annots[[fields[1]]]), ncol=length(fields)))
+  colnames(annots) <-  fields
+  # loop through each field and fill the annots data.frame
+  for (i in 1:length(fields)) {
+    field <- fields[i]
+    # remove any trailing spaces
+    annots[,i] <- gsub("\\s*$", "", raw_annots[[field]], perl=T)
+  } 
+  annots <- fix.datatypes(annots)
+  # use the id field to set the rownames
+  rownames(annots) <- as.character(annots$id)
+  # subset to the provided set of ids, if given
+  if (is.null(ids)) {
+    ids <- rownames(annots)
+  } else {
+    ids <- ids
+  }
+  annots <- droplevels(subset(annots, id %in% ids))
+  return(annots)
+}
+
+
+# helper function for reading gctx row/col ids
+read.gctx.ids <- function(gctx_path, dimension="row") {
+  if (!(dimension %in% c("row", "col"))) {
+    stop("dimension can be either row or col")
+  }
+  if (dimension == "row") {
+    name <- "0/META/ROW/id"
+  } else {
+    name <- "0/META/COL/id"
+  }
+  # remove any spaces
+  ids <- gsub("\\s*$", "", h5read(gctx_path, name=name), perl=T)
+  return(ids)
+}
+
 
 # define the initialization method for the class
 setMethod("initialize",
@@ -200,106 +181,57 @@ setMethod("initialize",
                   .Object@cdesc = fix.datatypes(cdesc)
                   return(.Object)
               }
-              else {
+              else { 
                   # parse the .gctx
-                  library(h5r)
                   .Object@src = src
                   # if the rid's or column id's are .grp files, read them in
                   if ( length(rid) == 1 && grepl(".grp$", rid) )
-                      rid = parse.grp(rid)
+                      rid <- parse.grp(rid)
                   if ( length(cid) == 1 && grepl(".grp$", cid) )
-                      cid = parse.grp(cid)
-                  # connect to the file; get row and column id's if needed
-                  f = H5File(src)
-                  .Object@version = getH5Attribute(f, "version")[]
-                  mat.data = getH5Dataset(getH5Group(f, "0/DATA/0"), "matrix")
-                  row.meta = getH5Group(f, "0/META/ROW")
-                  col.meta = getH5Group(f, "0/META/COL")
-                  # get the row id's and cid's from the file
-                  rid.data = getH5Dataset(row.meta, "id")
-                  rid.all = rid.data[]
-                  cid.data = getH5Dataset(col.meta, "id")
-                  cid.all = cid.data[]
-                  # if rid's and cid's aren't given by user, assign them
-                  if ( is.null(rid) )
-                      rid = rid.all
-                  if ( is.null(cid) )
-                      cid = cid.all
-                  # get the row and column indices we need
-                  ridx = match(rid, rid.all)
-                  if ( any(is.na(ridx)) ) {
-                      missing.rid = sort(rid[is.na(ridx)])
-                      missing.str = paste(missing.rid, collapse = "\n")
-                      warning(sprintf("There were no matches for the following rid's:\n%s", missing.str))
-                      rid = rid[!is.na(ridx)]
-                      ridx = ridx[!is.na(ridx)]
+                      cid <- parse.grp(cid)
+                  # get the row and column ids
+                  all_rid <- read.gctx.ids(src, dimension="row")
+                  all_cid <- read.gctx.ids(src, dimension="col")
+                  # if rid or cid specified, read only those rows/columns
+                  if (!is.null(rid)) {
+                    ridx <- match(rid, all_rid)
+                  } else {
+                    ridx <- seq_along(all_rid)
                   }
-                  cidx = match(cid, cid.all)
-                  if ( any(is.na(cidx)) ) {
-                      missing.cid = sort(cid[is.na(cidx)])
-                      missing.str = paste(missing.cid, collapse = "\n")
-                      warning(sprintf("There were no matches for the following cid's:\n%s", missing.str))
-                      cid = cid[!is.na(cidx)]
-                      cidx = cidx[!is.na(cidx)]
+                  if (!is.null(cid)) {
+                    cidx <- match(cid, all_cid)
+                  } else {
+                    cidx <- seq_along(all_cid)
                   }
                   # read the data matrix
-                  if ( length(cidx) == 1)
-                      mat = as.matrix(mat.data[cidx, ridx])
-                  else
-                      mat = t(mat.data[cidx, ridx])
-                  dimnames(mat) = list(rid, cid)
-                  
-                  # read the row meta data
-                  row.contents = listH5Contents(row.meta)
-                  row.fields = names(row.contents)
-                  row.fields = row.fields[row.fields != "." & row.fields != "id"]
-                  # preallocate the data frame
-                  rdesc = data.frame(matrix(rep("", length(ridx) * length(row.fields)),
-                                            nrow = length(ridx), ncol = length(row.fields),
-                                            dimnames = list(rid, row.fields)))
-                  # read it in
-                  for ( row.field in row.fields ) {
-                      row.data = getH5Dataset(row.meta, row.field)
-                      rdesc[[row.field]] = row.data[ridx]
-                  }
-                  
-                  # read the column meta data
-                  col.contents = listH5Contents(col.meta)
-                  col.fields = names(col.contents)
-                  col.fields = col.fields[col.fields != "." & col.fields != "id"]
-                  # preallocate
-                  cdesc = data.frame(matrix(rep("", length(cidx) * length(col.fields)),
-                                            nrow = length(cidx), ncol = length(col.fields),
-                                            dimnames = list(cid, col.fields)))
-                  # read in
-                  for ( col.field in col.fields ) {
-                      col.data = getH5Dataset(col.meta, col.field)
-                      cdesc[[col.field]] = col.data[cidx]
-                  }
-                  
-                  # assign all data
-                  .Object@mat = mat
-                  .Object@rid = rid
-                  .Object@cid = cid
-                  .Object@rdesc = fix.datatypes(rdesc)
-                  .Object@cdesc = fix.datatypes(cdesc)
+                  .Object@mat <- h5read(src, name="0/DATA/0/matrix", index=list(ridx, cidx))
+                  # set the row and column ids
+                  .Object@rid <- all_rid[ridx]
+                  .Object@cid <- all_cid[cidx]
+                  colnames(.Object@mat) <- all_cid[cidx]
+                  rownames(.Object@mat) <- all_rid[ridx]
+                  # get the meta data
+                  .Object@rdesc <- read.gctx.meta(src, dimension="row", ids=rid)
+                  .Object@cdesc <- read.gctx.meta(src, dimension="col", ids=cid)
                   return(.Object)
               }
           }
 )
 
+
 # function to parse a GCT(X)
-# just instantiates a new .gct object
-parse.gctx = function(fname, rid = NULL, cid = NULL) {
-    ds = new("GCT", src = fname, rid = rid, cid = cid)
+# just instantiates a new GCT object
+parse.gctx <- function(fname, rid = NULL, cid = NULL) {
+    ds <- new("GCT", src = fname, rid = rid, cid = cid)
     return(ds)
 }
 
-# method for gct class object to extract rows and cols from .gct file
-gctextract.tool = function(ds, rid = NULL, cid = NULL) {
+
+### method to extract rows and cols from an existing GCT object ###
+gct.extract <- function(ds, rid = NULL, cid = NULL) {
     if (! is.null(rid)) {
         # these will be ordered as rid (that's how the intersect works in R)
-        rid.ds = intersect(rid, ds@rid)
+        rid.ds <- intersect(rid, ds@rid)
         if (! identical(rid.ds, rid)) {
             missings = setdiff(rid, rid.ds)
             warning("The following rid's were not found: ", 
@@ -325,26 +257,137 @@ gctextract.tool = function(ds, rid = NULL, cid = NULL) {
     return(ds)
 }
 
-# function to read .grp files
-parse.grp = function(fname) {
-    grp = scan(fname, what = "", quote = NULL, quiet = TRUE)
+
+append.dim <- function(ofile, mat, extension="gct") {
+  nc <- ncol(mat)
+  nr <- nrow(mat)
+  outFile <- basename(ofile)
+  filename <- strsplit(outFile,'.',fixed=T)[[1]][1]
+  ofile <- path.join(dirname(ofile),
+                    sprintf('%s_n%dx%d.%s',filename,
+                            nc, nr, extension))
+  return(ofile)
+}
+
+# write a gct file to disk
+write.gct <- function(ofile, ds, precision=4, appenddim=T, ver=3) {
+  # gct must contain the following fields
+  #          mat: Numeric data matrix [RxC]
+  #          rid: Cell array of row ids
+  #          rhd: Cell array of row annotation fieldnames
+  #          rdesc: Cell array of row annotations
+  #          cid: Cell array of column ids
+  #          chd: Cell array of column annotation fieldnames
+  #          cdesc: Cell array of column annotations
+  #          version: GCT version string
+  #          src: Source filename
+  
+  
+  # append the dimensions of the data set, if desired
+  if (appenddim) ofile <- append.dim(ofile, ds@mat, extension="gct")
+  
+  precision = floor(precision)
+  cat(sprintf('Saving file to %s\n',ofile))
+  cat(sprintf('Dimensions of matrix: [%dx%d]\n',nr,nc))
+  cat(sprintf('Setting precision to %d\n',precision))
+  
+  # open file      
+  if (ver==3) {
+    nrdesc = dim(ds@rdesc)[2]
+    ncdesc = dim(ds@cdesc)[2]
+    colkeys = colnames(ds@cdesc)
+    # append header
+    cat(sprintf('#1.%d\n%d\t%d\t%d\t%d', ver, nr, nc, nrdesc, ncdesc),
+        file=ofile,sep='\n')      
+    # line 3: sample row desc keys and sample names
+    cat(paste(c('id',colnames(ds@rdesc),ds@cid),collapse='\t'),
+        file=ofile,sep='\n',append=T)
+    # line 4 + ncdesc: sample desc
+    filler = 'na'
+    for (ii in 1:ncdesc) {
+      if (is.numeric(ds@cdesc[,ii])) {
+        cat(paste(c(colkeys[ii],rep(filler,nrdesc),
+                    round(ds@cdesc[,ii],precision)),
+                  collapse='\t'),
+            file=ofile,sep='\n',append=T)  
+      } else {
+        cat(paste(c(colkeys[ii],rep(filler,nrdesc),
+                    ds@cdesc[,ii]),
+                  collapse='\t'),
+            file=ofile,sep='\n',append=T)
+      }
+    }
+  } else {
+    # append header
+    cat(sprintf('#1.%d\n%d\t%d\t%d\t%d', ver, nr, nc),
+        file=ofile,sep='\n')      
+    # line 3: sample row desc keys and sample names
+    cat(paste(c('id','Description',ds@cid),collapse='\t'),
+        file=ofile,sep='\n',append=T)
+  }
+  
+  for (ii in 1:nr) {    
+    # print rows
+    cat(paste(c(ds@rid[ii],
+                ds@rdesc[ii,],
+                round(ds@mat[ii,],precision)),collapse='\t'),
+        sep='\n',file=ofile,append=T)
+  }
+  cat(sprintf('Saved.\n'))  
+}
+
+
+# write a GCTX object
+# THIS DOESN'T WORK YET
+# write.gctx <- function(ofile, ds, appenddim=T) {
+#   if (appenddim) ofile <- append.dim(ofile, ds@mat, extension="gctx")
+#   # start the file object
+#   h5createFile(ofile)
+#   # create all the necessary groups
+#   h5createGroup(ofile, "0")
+#   h5createGroup(ofile, "0/DATA")
+#   h5createGroup(ofile, "0/DATA/0")
+#   h5createGroup(ofile, "0/META")
+#   h5createGroup(ofile, "0/META/COL")
+#   h5createGroup(ofile, "0/META/ROW")
+#   h5createGroup(ofile, "0/META/COL/id")
+#   h5createGroup(ofile, "0/META/ROW/id")
+#   h5createGroup(ofile, "version")
+#   # write data to each group
+#   h5write(ds@mat, ofile, "0/DATA/0/matrix")
+#   h5write(ds@rdesc, ofile, "0/META/ROW")
+#   h5write(ds@cdesc, ofile, "0/META/COL")
+#   h5write(ds@rid, ofile, "0/META/ROW/id")
+#   h5write(ds@cid, ofile, "0/META/COL/id")
+#   h5write("GCTX1.0", ofile, "version")
+# }
+
+
+###########################################
+### functions for other CMap file types ###
+###########################################
+
+### function to read a .grp file and return a vector ###
+parse.grp <- function(fname) {
+    grp <- scan(fname, what = "", quote = NULL, quiet = TRUE)
     return(grp)
 }
 
-# function to read .gmx files
-parse.gmx = function(fname) {
-    tmp = read.table(fname, sep = "\t", 
+
+### function to read a .gmx file and return a list ###
+parse.gmx <- function(fname) {
+    tmp <- read.table(fname, sep = "\t", 
                      header = TRUE, stringsAsFactors = FALSE)
     # preallocate a list for the gmx
-    L = list()
+    L <- list()
     # loop over the first row of the .gmx
     for ( n in names(tmp) ) {
         # get all the values; remove empties at the end
-        values = tmp[[n]][-1]
-        remove.idx = values == ""
-        values = values[!remove.idx]
+        values <- tmp[[n]][-1]
+        remove.idx <- values == ""
+        values <- values[!remove.idx]
         # put in a list
-        L[[n]] = list(head = n,
+        L[[n]] <- list(head = n,
                       desc = tmp[[n]][1], 
                       len = length(values), 
                       entry = values)
@@ -352,56 +395,51 @@ parse.gmx = function(fname) {
     return(L)
 }
 
-# function to read .gmt files
-parse.gmt = function(fname) {
-    gmt.lines = scan(fname, what = "", sep = "\n",
+
+### function to read a .gmt file and return a a list ###
+parse.gmt <- function(fname) {
+    gmt.lines <- scan(fname, what = "", sep = "\n",
                      quote = NULL, quiet = TRUE)
-    tmp = lapply(gmt.lines, function(x) unlist(strsplit(x, "\t")))
-    mk.gmt.entry = function(x) {
-        L = list()
-        L[["head"]] = x[1]
-        L[["desc"]] = x[2]
-        l.entry = x[-c(1:2)]
-        idx = l.entry != ""
-        L[["entry"]] = l.entry[idx]
-        L[["len"]] = length(L[["entry"]])
+    tmp <- lapply(gmt.lines, function(x) unlist(strsplit(x, "\t")))
+    mk.gmt.entry <- function(x) {
+        L <- list()
+        L[["head"]] <- x[1]
+        L[["desc"]] <- x[2]
+        l.entry <- x[-c(1:2)]
+        idx <- l.entry != ""
+        L[["entry"]] <- l.entry[idx]
+        L[["len"]] <- length(L[["entry"]])
         return(L)
     }
-    L = lapply(tmp, function(x) mk.gmt.entry(x))
-    names(L) = unlist(lapply(L, function(x) x$head))
+    L <- lapply(tmp, function(x) mk.gmt.entry(x))
+    names(L) <- unlist(lapply(L, function(x) x$head))
     return(L)
 }
 
-# function to write tab-delimited text files at a fixed numerical precision
-mktbl = function(tbl, ofile, precision = 4, col.names = TRUE, row.names = TRUE) {
-    tbl = as.data.frame(tbl)
+
+### function to write tab-delimited text files at a fixed numerical precision ###
+mktbl <- function(tbl, ofile, precision = 4, col.names = TRUE, row.names = TRUE) {
     # format numeric floats to two decimal points; leave all others as is
     for (col in names(tbl))
         if (class(tbl[[col]]) == "numeric")
             if (! (all(round(tbl[[col]]) == tbl[[col]]))) {
                 # the format string; tells us the precision
-                fmt = paste("%0.", as.character(precision), "f", sep = "")
-                tbl[[col]] = sprintf(fmt, tbl[[col]])
+                fmt <- paste("%0.", as.character(precision), "f", sep = "")
+                tbl[[col]] <- sprintf(fmt, tbl[[col]])
             }
     write.table(tbl, file = ofile, sep = "\t", quote = FALSE, 
                 col.names = col.names, row.names = row.names)
 }
 
+########################################
+### Other Misc. utility functions ######
+########################################
+
+### function to join a bunch of arguments into a file path (same as matlab's fullfile) ###
 # function to join a bunch of arguments into a file path (same as matlab's fullfile)
-path.join = function(...) {
+path.join <- function(...) {
     args = c(...)
     args = sub("/$", "", args)
     path = paste(args, collapse = "/")
     return(path)
-}
-
-# function to make a RESTful call to the supplied URL
-# and return the parsed JSON response
-call.api <- function(url) {
-  require(RCurl)
-  require(rjson)
-  # call API, parse JSON, and return parsed object
-  # .opts = list(ssl.verifypeer = FALSE)
-  # disables the SSL certificate check
-  return(fromJSON(getURL(url, .opts = list(ssl.verifypeer = FALSE))))
 }
