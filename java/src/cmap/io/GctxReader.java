@@ -52,6 +52,11 @@ import cmap.matrix.ShortDataset;
 import cmap.matrix.SlicedDatasetView;
 import cmap.matrix.Vector;
 
+/**
+ * 
+ * Read files in gctx format.
+ *
+ */
 public class GctxReader {
 
     public static final String COL_METADATA_PATH = "/0/META/COL";
@@ -62,6 +67,12 @@ public class GctxReader {
 
     private String path;
 
+    /**
+     * Creates a new reader.
+     * 
+     * @param path
+     *            The input file path.
+     */
     public GctxReader(String path) {
 	try {
 	    if (!new File(path).exists()) {
