@@ -50,7 +50,7 @@ text report of the statistics of the detected peaks (A10_pkstats.txt).
 
 1. R versions 2.9 and above
 2. prada package: http://www.bioconductor.org/packages/devel/bioc/html/prada.html
-3. h5r package: http://cran.r-project.org/web/packages/h5r/index.html
+3. rhdf5 package: http://bioconductor.org/packages/release/bioc/html/rhdf5.html
 
 #### Tools:
 
@@ -108,6 +108,7 @@ Below are summarized the tools available to perform so common data analysis task
 
 ### Creating .gct and .gctx files
 * **MATLAB**: Use the [mkgct](https://github.com/cmap/l1ktools/blob/master/matlab/lib/mkgct.m) and [mkgctx](https://github.com/cmap/l1ktools/blob/master/matlab/lib/mkgctx.m) functions.
+* **R** Source the script [l1ktools/R/cmap/io.R](https://github.com/cmap/l1ktools/blob/master/R/cmap/io.R). Then use the write.gctx or write.gct functions.
 * **Python**: Import [cmap.io.gct](https://github.com/cmap/l1ktools/blob/master/python/cmap/io/gct.py) and instantiate a GCT object. Then call the "build" method or "build_from_DataFrame" method to assmble a GCT object from a data matrix and optionally row and column annotations. Finally, call the "write" method to write to file as a .gctx.
 
 ### Z-Scoring a data set
