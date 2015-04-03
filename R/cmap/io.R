@@ -341,7 +341,6 @@ write.gct <- function(ofile, ds, precision=4, appenddim=T, ver=3) {
 
 
 # write a GCTX object
-# THIS DOESN'T WORK YET
 write.gctx <- function(ds, ofile, appenddim=T) {
   if (appenddim) ofile <- append.dim(ofile, ds@mat, extension="gctx")
   # check if the file already exists
@@ -370,6 +369,7 @@ write.gctx <- function(ds, ofile, appenddim=T) {
   # close any open handles
   H5close()
 }
+
 
 # helper function to write a data.frame of meta data to gctx object
 # makes an HDF5 entry for each column of the data.frame
