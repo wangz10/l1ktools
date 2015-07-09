@@ -158,7 +158,7 @@ class GCT(object):
             row_meta_tmp = row[:int(dims[2])+1]
             row_meta_tmp.insert(0,ii)
             self._add_row_to_meta_table('row', row_meta_tmp)
-            self.matrix[ii] = row[int(dims[2])+1:]
+            self.matrix[ii] = map(self._to_nan, row[int(dims[2])+1:])
             if verbose:
                 progress_bar.update('reading gct file: ', ii, int(dims[0]))
 
@@ -236,6 +236,15 @@ class GCT(object):
             return True
         except ValueError:
             return False
+
+    def _to_nan(self,s):
+        '''
+        convert string that is not a number to nan
+        '''
+        if self._is_number(s):
+            return float(s)
+        else:
+            return numpy.nan
 
     def get_gctx_cid_inds(self,src,match_list=None):
         '''
