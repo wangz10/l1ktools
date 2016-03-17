@@ -697,8 +697,42 @@ class GCT(object):
                     h5f.createArray('/0/META/ROW', field,
                                     numpy.array(self.get_row_meta(field)))
                 h5f.close()
+        elif mode == 'gct':
+            # if there's no .gct at the end, add the dimensions and the file extension
+            if not re.match('.*.gct$', ofile):
+                ofile = '{0}_n{1}x{2}.gct'.format(ofile, self.matrix.shape[1],
+                                                       self.matrix.shape[0])
+            outfile = open(ofile, 'w')
+            outfile.write('#1.3\n')
+            # get dimensions of the matrix
+            a, b = self.matrix.shape
+            # get number of columns and rows
+            cols = [x for x in self.get_chd() if x != 'ind']
+            ncols = len(cols)
+            rows = [x for x in self.get_rhd() if x != 'ind']
+            nrows = len(rows)
+            # write second line specifying dimensions
+            outfile.write( '\t'.join(map(str, [a, b, nrows, ncols])) + '\n' )
+            # write 3rd line
+            # write row headers
+            outfile.write('\t'.join(rows) + '\t')
+            # write column ids
+            outfile.write('\t'.join(self.get_cids()) + '\n')
+            # write col meta lines
+            for field in cols:
+                outfile.write(field + '\t' + '\t'.join(['na'] * nrows) + '\t' +
+                    '\t'.join(map(str, self.get_column_meta(field))) + '\n')
+            # write row meta and data
+            rids = self.get_rids()
+            row_meta_matrix = numpy.array([self.get_row_meta(field) for field in rows]).transpose() # rids x nrows 
+            for i, rid in enumerate(rids):
+                outfile.write(str(rid) + '\t')
+                outfile.write('\t'.join(map(str, row_meta_matrix[i])))
+                outfile.write('\t'.join(map(str, self.matrix[i])) + '\n')
+            outfile.close()
+
         else:
-            raise Exception('The only mode currently supported is gctx')
+            raise Exception('The modes currently supported are gct and gctx')
 
     def get_sample_meta(self,sample_name):
         '''
