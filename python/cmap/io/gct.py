@@ -727,7 +727,7 @@ class GCT(object):
             row_meta_matrix = numpy.array([self.get_row_meta(field) for field in rows]).transpose() # rids x nrows 
             for i, rid in enumerate(rids):
                 outfile.write(str(rid) + '\t')
-                outfile.write('\t'.join(map(str, row_meta_matrix[i])))
+                outfile.write('\t'.join(map(str, row_meta_matrix[i])) + '\t')
                 outfile.write('\t'.join(map(str, self.matrix[i])) + '\n')
             outfile.close()
 
